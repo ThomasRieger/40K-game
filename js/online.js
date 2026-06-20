@@ -163,12 +163,11 @@ function joinGame(code) {
 }
 
 // In-game widget toggle + copy
-document.getElementById('onlineToggle').addEventListener('click', () => {
-    document.getElementById('onlinePanel').classList.toggle('hidden');
-});
-document.getElementById('btnCopyCode').addEventListener('click', () => {
+const _tog = document.getElementById('onlineToggle');
+if (_tog) _tog.addEventListener('click', () => { document.getElementById('onlinePanel').classList.toggle('hidden'); });
+const _cpy = document.getElementById('btnCopyCode');
+if (_cpy) _cpy.addEventListener('click', () => {
     navigator.clipboard.writeText(document.getElementById('onlineRoomCode').innerText).then(() => {
-        document.getElementById('btnCopyCode').innerText = 'Copied!';
-        setTimeout(() => { document.getElementById('btnCopyCode').innerText = 'Copy'; }, 1500);
+        _cpy.innerText = 'Copied!'; setTimeout(() => { _cpy.innerText = 'Copy'; }, 1500);
     });
 });

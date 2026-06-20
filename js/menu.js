@@ -86,26 +86,20 @@ document.getElementById('edFaction').addEventListener('change', e => {
     teamData.p1.roster = [];
     renderEditor();
 });
-document.getElementById('edSaveBtn').addEventListener('click',   () => { saveTeamData(); showMainMenu(); });
-document.getElementById('edResetBtn').addEventListener('click',  () => { teamData.p1.roster = []; renderEditor(); });
-document.getElementById('editorClose').addEventListener('click', () => { saveTeamData(); showMainMenu(); });
-document.getElementById('menuEditBtn').addEventListener('click', showTeamEditor);
+function on(id, ev, fn) { const el = document.getElementById(id); if (el) el.addEventListener(ev, fn); }
 
-document.getElementById('menuHostBtn').addEventListener('click', () => {
-    hostGame();
-});
-document.getElementById('menuJoinBtn').addEventListener('click', () => {
+on('edSaveBtn',     'click', () => { saveTeamData(); showMainMenu(); });
+on('edResetBtn',    'click', () => { teamData.p1.roster = []; renderEditor(); });
+on('editorClose',   'click', () => { saveTeamData(); showMainMenu(); });
+on('menuEditBtn',   'click', showTeamEditor);
+on('menuHostBtn',   'click', () => hostGame());
+on('menuJoinBtn',   'click', () => {
     document.getElementById('menuJoinRow').classList.toggle('hidden');
     document.getElementById('menuCodeInput').focus();
 });
-document.getElementById('menuConnectBtn').addEventListener('click', () => {
-    const code = document.getElementById('menuCodeInput').value.trim();
-    if (code) joinGame(code);
-});
-document.getElementById('menuCodeInput').addEventListener('keydown', e => {
-    if (e.key === 'Enter') { const code = e.target.value.trim(); if (code) joinGame(code); }
-});
-document.getElementById('menuCopyCode').addEventListener('click', () => {
+on('menuConnectBtn','click', () => { const c = document.getElementById('menuCodeInput').value.trim(); if (c) joinGame(c); });
+on('menuCodeInput', 'keydown', e => { if (e.key === 'Enter') { const c = e.target.value.trim(); if (c) joinGame(c); } });
+on('menuCopyCode',  'click', () => {
     navigator.clipboard.writeText(document.getElementById('menuRoomCode').innerText).then(() => {
         document.getElementById('menuCopyCode').innerText = 'Copied!';
         setTimeout(() => { document.getElementById('menuCopyCode').innerText = 'Copy'; }, 1500);
