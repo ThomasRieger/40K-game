@@ -26,13 +26,22 @@ function rosterTotal(playerKey) {
     }, 0);
 }
 
-function layoutPositions(count, team) {
-    const positions = [];
-    if (!count) return positions;
-    const spacing = Math.min(65, (MAP_HEIGHT - 120) / count);
-    const startY = MAP_HEIGHT / 2 - (spacing * (count - 1)) / 2;
+function layoutGroupedPositions(spawnUnits, team) {
     const x = team === 1 ? 100 : MAP_WIDTH - 100;
-    for (let i = 0; i < count; i++) positions.push({ x, y: startY + i * spacing });
+    const unitSpacing = 52, groupGap = 28;
+    // Build groups of consecutive same-type units
+    const groups = [];
+    for (const u of spawnUnits) {
+        if (!groups.length || groups[groups.length - 1][0].def.id !== u.def.id) groups.push([]);
+        groups[groups.length - 1].push(u);
+    }
+    const totalH = groups.reduce((h, g) => h + g.length * unitSpacing, 0) + (groups.length - 1) * groupGap;
+    let y = MAP_HEIGHT / 2 - totalH / 2 + unitSpacing / 2;
+    const positions = [];
+    for (const group of groups) {
+        for (const _ of group) { positions.push({ x, y }); y += unitSpacing; }
+        y += groupGap;
+    }
     return positions;
 }
 

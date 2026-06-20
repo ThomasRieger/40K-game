@@ -54,8 +54,9 @@ function updateGroupUI() {
         uiSheet.classList.add('hidden'); document.getElementById('abilityPopup').classList.add('hidden');
         gp.classList.remove('hidden'); document.getElementById('groupCount').innerText = state.selectedUnits.length;
         const cp = state.phases[state.currentPhaseIndex], anyCanAct = state.selectedUnits.some(u => !u.hasActedThisPhase);
+        const allSameType = state.selectedUnits.every(u => u.defId === state.selectedUnits[0].defId);
         document.getElementById('grpMove').disabled   = (cp !== 'Movement' || !anyCanAct);
-        document.getElementById('grpShoot').disabled  = (cp !== 'Shooting' || !anyCanAct);
+        document.getElementById('grpShoot').disabled  = (cp !== 'Shooting' || !anyCanAct || !allSameType);
         document.getElementById('grpCharge').disabled = (cp !== 'Charge'   || !anyCanAct);
         document.getElementById('grpMelee').disabled  = (cp !== 'Fight'    || !anyCanAct);
     } else { gp.classList.add('hidden'); state.groupAction = null; }
@@ -87,7 +88,7 @@ document.getElementById('toggleLogBtn').addEventListener('click', () => {
 document.getElementById('btnAbility').addEventListener('click', () => { if (state.selectedUnit && !state.selectedUnit.hasActedThisPhase && state.cp[state.turn] >= 1) document.getElementById('abilityPopup').classList.toggle('hidden'); });
 document.getElementById('btnHeal').addEventListener('click', () => {
     if (state.selectedUnit && !state.selectedUnit.hasActedThisPhase && state.cp[state.turn] >= 1) {
-        state.cp[state.turn]--; state.selectedUnit.hp = Math.min(state.selectedUnit.w, state.selectedUnit.hp + 2);
+        state.cp[state.turn]--; state.selectedUnit.hp = Math.min(state.selectedUnit.w, state.selectedUnit.hp + 1);
         state.selectedUnit.hasActedThisPhase = true; addEffect('heal', state.selectedUnit.x, state.selectedUnit.y, 0, 0);
         document.getElementById('abilityPopup').classList.add('hidden'); updateUI(); onlineSync();
     }

@@ -1,7 +1,7 @@
 class Unit {
     constructor(team, def, name, x, y) {
         this.team = team; this.name = name; this.x = x; this.y = y;
-        this.type = def.role; this.color = def.color; this.radius = def.radius || 15; this.pts = def.pts || 0;
+        this.type = def.role; this.color = def.color; this.radius = def.radius || 15; this.pts = def.pts || 0; this.defId = def.id;
         this.m = def.m * 20; // inches → canvas px (1" = 20px)
         this.t = def.t; this.sv = def.sv; this.w = def.w; this.ld = def.ld; this.oc = def.oc;
         this.meleeWeapon = { ...def.meleeWeapon };

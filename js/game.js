@@ -37,6 +37,35 @@ function checkWinCondition() { const t1 = state.units.some(u => u.team === 1), t
 
 function addLRuin(x, y, size) { const t = 20; state.terrain.push(new TerrainRect(x, y, size, t)); state.terrain.push(new TerrainRect(x, y, t, size)); }
 
+function buildTerrain(preset) {
+    const cx = MAP_WIDTH / 2, cy = MAP_HEIGHT / 2;
+    if (preset === 0) {
+        // Ruined Outpost — symmetric L-ruins + side walls
+        addLRuin(cx-100, cy-100, 200); addLRuin(cx+100, cy+100, -200);
+        state.terrain.push(new TerrainRect(200, cy-150, 25, 300)); state.terrain.push(new TerrainRect(MAP_WIDTH-225, cy-150, 25, 300));
+        addLRuin(150, 150, 100); addLRuin(MAP_WIDTH-150, 150, -100); addLRuin(150, MAP_HEIGHT-150, 100); addLRuin(MAP_WIDTH-150, MAP_HEIGHT-150, -100);
+    } else if (preset === 1) {
+        // Crossroads — 4 quadrant bunkers + cross-wall gaps
+        addLRuin(cx-280, cy-200, 110); addLRuin(cx+170, cy-200, -110);
+        addLRuin(cx-280, cy+90,  110); addLRuin(cx+170, cy+90,  -110);
+        state.terrain.push(new TerrainRect(cx-130, cy-15, 100, 30)); state.terrain.push(new TerrainRect(cx+30, cy-15, 100, 30));
+        state.terrain.push(new TerrainRect(cx-15, cy-130, 30, 100)); state.terrain.push(new TerrainRect(cx-15, cy+30, 30, 100));
+        state.terrain.push(new TerrainRect(110, cy-50, 20, 100)); state.terrain.push(new TerrainRect(MAP_WIDTH-130, cy-50, 20, 100));
+    } else {
+        // Scattered Rubble — small obstacles spread across field
+        const blocks = [
+            [cx-60, cy-130, 120, 22], [cx-60, cy+108, 120, 22],
+            [cx-200, cy-22, 80, 22],  [cx+120, cy-22, 80, 22],
+            [280,  cy-160, 22, 90],   [280,  cy+70,  22, 90],
+            [MAP_WIDTH-302, cy-160, 22, 90], [MAP_WIDTH-302, cy+70, 22, 90],
+            [cx-130, 170, 22, 80],    [cx+108, 170, 22, 80],
+            [cx-130, MAP_HEIGHT-250, 22, 80], [cx+108, MAP_HEIGHT-250, 22, 80],
+            [130, cy-20, 70, 20],     [MAP_WIDTH-200, cy-20, 70, 20],
+        ];
+        for (const [x,y,w,h] of blocks) state.terrain.push(new TerrainRect(x, y, w, h));
+    }
+}
+
 function initGame() {
     state.units = []; state.terrain = []; state.round = 1; state.turn = 1; state.currentPhaseIndex = 0;
     state.selectedUnit = null; state.currentAction = null; state.winner = null; state.scale = 1.0;
@@ -44,13 +73,10 @@ function initGame() {
     state.combatQueue = []; state.cp = { 1: 1, 2: 1 };
     document.getElementById('groupPanel').classList.add('hidden');
 
-    const cx = MAP_WIDTH / 2, cy = MAP_HEIGHT / 2;
-    addLRuin(cx-100, cy-100, 200); addLRuin(cx+100, cy+100, -200);
-    state.terrain.push(new TerrainRect(200, cy-150, 25, 300)); state.terrain.push(new TerrainRect(MAP_WIDTH-225, cy-150, 25, 300));
-    addLRuin(150, 150, 100); addLRuin(MAP_WIDTH-150, 150, -100); addLRuin(150, MAP_HEIGHT-150, 100); addLRuin(MAP_WIDTH-150, MAP_HEIGHT-150, -100);
+    buildTerrain(Math.floor(Math.random() * 3));
 
     const p1Units = spawnTeam(1, teamData.p1), p2Units = spawnTeam(2, teamData.p2);
-    const p1Pos = layoutPositions(p1Units.length, 1), p2Pos = layoutPositions(p2Units.length, 2);
+    const p1Pos = layoutGroupedPositions(p1Units, 1), p2Pos = layoutGroupedPositions(p2Units, 2);
     p1Units.forEach((e, i) => state.units.push(new Unit(1, e.def, e.name, p1Pos[i].x, p1Pos[i].y)));
     p2Units.forEach((e, i) => state.units.push(new Unit(2, e.def, e.name, p2Pos[i].x, p2Pos[i].y)));
     state.units.forEach((u, i) => { u.uid = i; });
