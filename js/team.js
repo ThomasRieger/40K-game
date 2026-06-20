@@ -27,20 +27,35 @@ function rosterTotal(playerKey) {
 }
 
 function layoutGroupedPositions(spawnUnits, team) {
-    const x = team === 1 ? 100 : MAP_WIDTH - 100;
-    const unitSpacing = 52, groupGap = 28;
-    // Build groups of consecutive same-type units
+    const margin = 65, colSpacing = 55, rowSpacing = 50;
+    const maxRows = Math.floor((MAP_HEIGHT - margin * 2) / rowSpacing); // ~15 per column
+
+    // Group consecutive same-type units
     const groups = [];
     for (const u of spawnUnits) {
-        if (!groups.length || groups[groups.length - 1][0].def.id !== u.def.id) groups.push([]);
-        groups[groups.length - 1].push(u);
+        if (!groups.length || groups[groups.length-1][0].def.id !== u.def.id) groups.push([]);
+        groups[groups.length-1].push(u);
     }
-    const totalH = groups.reduce((h, g) => h + g.length * unitSpacing, 0) + (groups.length - 1) * groupGap;
-    let y = MAP_HEIGHT / 2 - totalH / 2 + unitSpacing / 2;
-    const positions = [];
+
+    // Pack groups into columns; start a new column if group doesn't fit
+    const cols = [[]];
     for (const group of groups) {
-        for (const _ of group) { positions.push({ x, y }); y += unitSpacing; }
-        y += groupGap;
+        if (cols[cols.length-1].length > 0 && cols[cols.length-1].length + group.length > maxRows) cols.push([]);
+        let rem = [...group];
+        while (rem.length) {
+            const c = cols[cols.length-1], space = maxRows - c.length;
+            c.push(...rem.splice(0, space));
+            if (rem.length) cols.push([]);
+        }
+    }
+
+    // Assign positions — col 0 is closest to player's edge
+    const positions = [];
+    for (let ci = 0; ci < cols.length; ci++) {
+        const col = cols[ci];
+        const colX = team === 1 ? margin + ci * colSpacing : MAP_WIDTH - margin - ci * colSpacing;
+        const startY = MAP_HEIGHT / 2 - ((col.length - 1) * rowSpacing) / 2;
+        for (let ri = 0; ri < col.length; ri++) positions.push({ x: colX, y: startY + ri * rowSpacing });
     }
     return positions;
 }
