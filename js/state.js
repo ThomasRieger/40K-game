@@ -23,7 +23,8 @@ let isDragging = false, dragStartX = 0, dragStartY = 0, clickedOnUnitAtStart = n
 let isRubberBanding = false, rubberX1 = 0, rubberY1 = 0, rubberX2 = 0, rubberY2 = 0;
 
 // Stubs — overridden by online.js at runtime
-var onlineSendDice = function() {};
-var onlineSync     = function() {};
-var isOnline       = function() { return false; };
-var isMyTurn       = function() { return true; };
+var onlineSendDice    = function() {};
+var onlineSync        = function() {};
+var onlineSaveRollHook = function() { return false; };
+var isOnline          = function() { return false; };
+var isMyTurn          = function() { return true; };

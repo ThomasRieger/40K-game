@@ -5,12 +5,31 @@ isOnline = function() { return myTeam !== 0; };
 isMyTurn = function() { return !isOnline() || state.turn === myTeam; };
 
 onlineSendDice = function(action, data) {
-    if (!conn || !conn.open || !isMyTurn()) return;
+    if (!conn || !conn.open) return;
+    // save_result is sent by the defender (not the active turn player)
+    if (action !== 'save_result' && !isMyTurn()) return;
     conn.send({ type: 'dice_' + action, ...data });
 }
 
-function applyDiceOpen(title, count, needed) {
-    showDiceModal(title, count, needed, true); // spectator=true hides Roll btn
+let isSaveRollMode = false;
+
+onlineSaveRollHook = function(rolls, needed) {
+    if (!isSaveRollMode) return false;
+    isSaveRollMode = false;
+    onlineSendDice('save_result', { rolls, needed });
+    document.getElementById('diceOverlay').classList.add('hidden');
+    return true;
+}
+
+// Open dice overlay without triggering another send (avoids loop)
+function applyDiceOpen(title, count, needed, canRoll = false) {
+    document.getElementById('diceOverlay').classList.remove('hidden');
+    document.getElementById('diceTitle').innerText = title;
+    diceContainer.innerHTML = '';
+    rollDiceBtn.classList.toggle('hidden', !canRoll);
+    continueBtn.classList.add('hidden'); continueBtn.disabled = false; continueBtn.innerText = 'Continue';
+    for (let i = 0; i < count; i++) diceContainer.appendChild(makeDie());
+    if (canRoll) isSaveRollMode = true;
 }
 
 function applyDiceRolled(rolls, needed) {
@@ -22,6 +41,17 @@ function applyDiceRolled(rolls, needed) {
         if (r >= needed) die.classList.add('success'); else die.classList.add('fail');
     });
     continueBtn.classList.remove('hidden'); continueBtn.disabled = true; continueBtn.innerText = 'Waiting…';
+}
+
+function applyDiceSaveResult(rolls, needed) {
+    const dice = Array.from(diceContainer.querySelectorAll('.die'));
+    dice.forEach((die, i) => {
+        const r = rolls[i], inner = die.querySelector('.die-inner');
+        inner.style.transition = 'transform 0.45s cubic-bezier(0.2,0.8,0.3,1.0)';
+        inner.style.transform = faceShowTransform[r];
+        if (r >= needed) die.classList.add('success'); else die.classList.add('fail');
+    });
+    continueBtn.classList.remove('hidden'); continueBtn.disabled = false; continueBtn.innerText = 'Continue';
 }
 
 onlineSync = function() {
@@ -77,9 +107,14 @@ function onData(data) {
     } else if (data.type === 'state') {
         applySync(data);
     } else if (data.type === 'dice_open') {
-        applyDiceOpen(data.title, data.count, data.needed);
+        applyDiceOpen(data.title, data.count, data.needed, false); // spectator
+    } else if (data.type === 'dice_open_defender') {
+        // Attacker watches; defender can roll
+        applyDiceOpen(data.title, data.count, data.needed, !isMyTurn());
     } else if (data.type === 'dice_rolled') {
         applyDiceRolled(data.rolls, data.needed);
+    } else if (data.type === 'dice_save_result') {
+        applyDiceSaveResult(data.rolls, data.needed); // attacker sees results, clicks Continue
     } else if (data.type === 'dice_close') {
         document.getElementById('diceOverlay').classList.add('hidden');
     }

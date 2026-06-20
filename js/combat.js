@@ -25,13 +25,14 @@ function makeDie() {
     wrapper.appendChild(inner); return wrapper;
 }
 
-function showDiceModal(title, count, needed, spectator = false) {
+function showDiceModal(title, count, needed, spectator = false, roller = 'attacker') {
+    const isSpectator = spectator || (roller === 'defender' && isOnline());
     diceOverlay.classList.remove('hidden'); diceTitle.innerText = title;
     diceContainer.innerHTML = '';
-    rollDiceBtn.classList.toggle('hidden', spectator);
+    rollDiceBtn.classList.toggle('hidden', isSpectator);
     continueBtn.classList.add('hidden'); continueBtn.disabled = false; continueBtn.innerText = 'Continue';
     for (let i = 0; i < count; i++) diceContainer.appendChild(makeDie());
-    onlineSendDice('open', { title, count, needed });
+    onlineSendDice(roller === 'defender' ? 'open_defender' : 'open', { title, count, needed });
 }
 
 function logCombat(msg, team = 0) {
@@ -86,7 +87,10 @@ rollDiceBtn.addEventListener('click', () => {
             inner.classList.remove('rolling'); inner.style.animationDelay = '';
             inner.style.transition = 'transform 0.45s cubic-bezier(0.2,0.8,0.3,1.0)'; inner.style.transform = faceShowTransform[r];
             if (r >= combat.neededValue) { die.classList.add('success'); successes++; } else die.classList.add('fail');
-            if (i === dice.length - 1) setTimeout(() => { finishRoll(successes); onlineSendDice('rolled', { rolls, needed: combat.neededValue }); }, 480);
+            if (i === dice.length - 1) setTimeout(() => {
+                if (onlineSaveRollHook(rolls, combat.neededValue)) return;
+                finishRoll(successes); onlineSendDice('rolled', { rolls, needed: combat.neededValue });
+            }, 480);
         }, 380 + i * 90);
     });
 });
@@ -99,7 +103,7 @@ continueBtn.addEventListener('click', () => {
     } else if (combat.step === 'WOUND') {
         if (combat.rollCount === 0) { endCombat(); return; }
         combat.step = 'SAVE'; combat.neededValue = combat.target.sv + combat.weapon.ap;
-        showDiceModal(`Player ${combat.target.team}: Saving Throw (${combat.neededValue}+)`, combat.rollCount, combat.neededValue);
+        showDiceModal(`Player ${combat.target.team}: Saving Throw (${combat.neededValue}+)`, combat.rollCount, combat.neededValue, false, 'defender');
     } else if (combat.step === 'SAVE') {
         let fails = 0; diceContainer.querySelectorAll('.die').forEach(die => { if (!die.classList.contains('success')) fails++; });
         const dmg = fails * combat.weapon.d; combat.target.hp -= dmg;
