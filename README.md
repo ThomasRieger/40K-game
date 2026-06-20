@@ -9,25 +9,17 @@ A browser-based Warhammer 40K 10th Edition tabletop simulator. Play solo or 1v1 
 ## Setup
 
 ### Build Your Team
-1. Click **⚙ Edit Teams** on the main menu
-2. Pick your faction (Space Marines or Orks)
+1. Click **⚙ Edit Team** on the main menu
+2. Pick your faction (Space Marines, Orks, Necrons, or Astra Militarum)
 3. Add units from the shop — each has real 10E codex stats
 4. Stay within the **500 pt budget**
-5. Switch to the **Player 2** tab to set up the second team (local play)
-6. Click **Save & Close**
+5. Click **Save & Close**
 
-### Play
-- Click **⚔ Play** to start the game
-
----
-
-## Online 1v1
-
-1. Both players open **[the game](https://thomasrieger.github.io/40K-game)**
-2. Each player sets up their team in **Edit Teams → Player 1 tab** (your team)
-3. **Host**: click 🌐 Online → **Host** → copy the room code
-4. **Guest**: click 🌐 Online → **Join** → paste the code → connect
-5. Game starts automatically — host is Player 1, guest is Player 2
+### Play Online
+1. Both players build their own team independently
+2. **Host**: click **⚔ Host Game** → share the room code
+3. **Guest**: click **🌐 Join Game** → paste the code → connect
+4. Game starts automatically — host is Player 1, guest is Player 2
 
 ---
 
@@ -88,3 +80,9 @@ Captain · Librarian · Chaplain · Tactical Marine · Assault Marine · Devasta
 
 ### Orks
 Warboss · Weirdboy · Painboy · Mek · Ork Boy · Tankbusta · Meganob · Killa Kan
+
+### Necrons
+Necron Lord · Cryptek · Necron Warrior · Heavy Destroyer · Canoptek Scarabs · Canoptek Spyder · Triarch Praetorian · Monolith
+
+### Astra Militarum
+Lord Commissar · Primaris Psyker · Guardsman · Bullgryn · Heavy Weapons Team · Tech-Priest Enginseer · Leman Russ · Scout Sentinel
