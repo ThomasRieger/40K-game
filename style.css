@@ -674,6 +674,20 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 #edResetBtn { background: none; color: #555; border: 1px solid #2a2a2a; font-size: 0.68rem; letter-spacing: 1px; text-transform: uppercase; padding: 9px 16px; }
 #edResetBtn:hover { color: #999; border-color: #444; }
 
+/* ── Menu Join / Status ── */
+#menuJoinRow { display: flex; gap: 8px; margin-top: 4px; }
+#menuCodeInput { flex: 1; background: rgba(0,0,0,0.5); border: 1px solid #333; color: #eee; padding: 8px 12px; border-radius: 4px; font-size: 0.8rem; font-family: monospace; }
+#menuConnectBtn { background: #c8a84b; color: #000; border: none; padding: 8px 14px; border-radius: 4px; font-weight: bold; cursor: pointer; }
+#menuStatusArea { margin-top: 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+#menuOnlineStatus { font-size: 0.72rem; padding: 4px 12px; border-radius: 10px; background: rgba(0,0,0,0.4); }
+#menuOnlineStatus.hidden { display: none; }
+.menu-status-waiting { color: #888; }
+.menu-status-connected { color: #4caf50; }
+#menuRoomRow { font-size: 0.72rem; color: #888; display: flex; align-items: center; gap: 8px; }
+#menuRoomCode { font-family: monospace; color: #c8a84b; font-size: 0.8rem; letter-spacing: 1px; }
+#menuCopyCode { background: none; border: 1px solid #333; color: #666; padding: 2px 8px; border-radius: 3px; font-size: 10px; cursor: pointer; }
+#menuCopyCode:hover { border-color: #c8a84b; color: #c8a84b; }
+
 /* ── Online Widget ── */
 #onlineWidget { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 1100; display: flex; flex-direction: column; align-items: center; gap: 6px; }
 #onlineToggle { background: rgba(10,10,20,0.85); border: 1px solid #333; color: #888; padding: 4px 14px; border-radius: 12px; cursor: pointer; font-size: 11px; letter-spacing: 1px; }

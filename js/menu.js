@@ -7,29 +7,15 @@ function showMainMenu() {
         `<div class="menu-faction-group">${UNITS_DB['Orks'].units.slice(0,4).map(u=>`<img class="menu-faction-icon" src="${u.icon}" title="${u.name}">`).join('')}</div>`;
 }
 
-let gameStarted = false;
-function startGame() {
-    if (rosterTotal('p1') === 0 || rosterTotal('p2') === 0) teamData = JSON.parse(JSON.stringify(DEFAULT_TEAMS));
-    document.getElementById('mainMenu').classList.add('hidden');
-    document.getElementById('teamEditor').classList.add('hidden');
-    initGame();
-    if (!gameStarted) { gameStarted = true; draw(); }
-}
-
-let editorActivePlayer = 'p1';
 function showTeamEditor() {
     document.getElementById('mainMenu').classList.add('hidden');
     document.getElementById('teamEditor').classList.remove('hidden');
-    const sel = document.getElementById('edFaction');
-    sel.innerHTML = FACTIONS.map(f => `<option value="${f}">${f}</option>`).join('');
-    editorActivePlayer = 'p1';
-    document.getElementById('edTabP1').classList.add('active');
-    document.getElementById('edTabP2').classList.remove('active');
+    document.getElementById('edFaction').innerHTML = FACTIONS.map(f => `<option value="${f}">${f}</option>`).join('');
     renderEditor();
 }
 
 function renderEditor() {
-    const pk = editorActivePlayer, td = teamData[pk], fdb = UNITS_DB[td.faction], total = rosterTotal(pk);
+    const td = teamData.p1, fdb = UNITS_DB[td.faction], total = rosterTotal('p1');
     document.getElementById('edFaction').value = td.faction;
     const pct = Math.min(100, total / BUDGET * 100);
     const bc = total > BUDGET ? '#e53935' : total > BUDGET * 0.88 ? '#c8a84b' : '#4caf50';
@@ -53,7 +39,7 @@ function renderEditor() {
             <div class="ed-unit-ctrl">
                 <button data-action="minus" data-id="${def.id}" ${count > 0 ? '' : 'disabled'}>−</button>
                 <span class="ed-unit-count">${count}</span>
-                <button data-action="plus"  data-id="${def.id}" ${canAdd ? '' : 'disabled'}>+</button>
+                <button data-action="plus" data-id="${def.id}" ${canAdd ? '' : 'disabled'}>+</button>
             </div>
         </div>`;
     }).join('');
@@ -75,11 +61,11 @@ function renderEditor() {
 
 document.getElementById('edShop').addEventListener('click', e => {
     const btn = e.target.closest('[data-action]'); if (!btn) return;
-    const { action, id } = btn.dataset, td = teamData[editorActivePlayer], fdb = UNITS_DB[td.faction];
+    const { action, id } = btn.dataset, td = teamData.p1, fdb = UNITS_DB[td.faction];
     const def = fdb.units.find(u => u.id === id); if (!def) return;
     const entry = td.roster.find(r => r.id === id), count = entry ? entry.count : 0;
     if (action === 'plus') {
-        if (rosterTotal(editorActivePlayer) + def.pts > BUDGET || count >= def.maxCount) return;
+        if (rosterTotal('p1') + def.pts > BUDGET || count >= def.maxCount) return;
         if (entry) entry.count++; else td.roster.push({ id, count: 1 });
     } else if (action === 'minus') {
         if (!entry || entry.count <= 0) return;
@@ -91,30 +77,40 @@ document.getElementById('edShop').addEventListener('click', e => {
 
 document.getElementById('edRoster').addEventListener('click', e => {
     const btn = e.target.closest('[data-action="remove"]'); if (!btn) return;
-    teamData[editorActivePlayer].roster = teamData[editorActivePlayer].roster.filter(r => r.id !== btn.dataset.id);
+    teamData.p1.roster = teamData.p1.roster.filter(r => r.id !== btn.dataset.id);
     renderEditor();
 });
 
-document.getElementById('edTabP1').addEventListener('click', () => {
-    editorActivePlayer = 'p1';
-    document.getElementById('edTabP1').classList.add('active'); document.getElementById('edTabP2').classList.remove('active');
-    renderEditor();
-});
-document.getElementById('edTabP2').addEventListener('click', () => {
-    editorActivePlayer = 'p2';
-    document.getElementById('edTabP2').classList.add('active'); document.getElementById('edTabP1').classList.remove('active');
-    renderEditor();
-});
 document.getElementById('edFaction').addEventListener('change', e => {
-    teamData[editorActivePlayer].faction = e.target.value;
-    teamData[editorActivePlayer].roster = [];
+    teamData.p1.faction = e.target.value;
+    teamData.p1.roster = [];
     renderEditor();
 });
 document.getElementById('edSaveBtn').addEventListener('click',   () => { saveTeamData(); showMainMenu(); });
-document.getElementById('edResetBtn').addEventListener('click',  () => { teamData[editorActivePlayer].roster = []; renderEditor(); });
+document.getElementById('edResetBtn').addEventListener('click',  () => { teamData.p1.roster = []; renderEditor(); });
 document.getElementById('editorClose').addEventListener('click', () => { saveTeamData(); showMainMenu(); });
-document.getElementById('menuPlayBtn').addEventListener('click', startGame);
 document.getElementById('menuEditBtn').addEventListener('click', showTeamEditor);
+
+document.getElementById('menuHostBtn').addEventListener('click', () => {
+    hostGame();
+});
+document.getElementById('menuJoinBtn').addEventListener('click', () => {
+    document.getElementById('menuJoinRow').classList.toggle('hidden');
+    document.getElementById('menuCodeInput').focus();
+});
+document.getElementById('menuConnectBtn').addEventListener('click', () => {
+    const code = document.getElementById('menuCodeInput').value.trim();
+    if (code) joinGame(code);
+});
+document.getElementById('menuCodeInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { const code = e.target.value.trim(); if (code) joinGame(code); }
+});
+document.getElementById('menuCopyCode').addEventListener('click', () => {
+    navigator.clipboard.writeText(document.getElementById('menuRoomCode').innerText).then(() => {
+        document.getElementById('menuCopyCode').innerText = 'Copied!';
+        setTimeout(() => { document.getElementById('menuCopyCode').innerText = 'Copy'; }, 1500);
+    });
+});
 
 // ── Startup ──
 loadTeamData();

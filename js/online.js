@@ -6,10 +6,9 @@ isMyTurn = function() { return !isOnline() || state.turn === myTeam; };
 
 onlineSendDice = function(action, data) {
     if (!conn || !conn.open) return;
-    // save_result is sent by the defender (not the active turn player)
     if (action !== 'save_result' && !isMyTurn()) return;
     conn.send({ type: 'dice_' + action, ...data });
-}
+};
 
 let isSaveRollMode = false;
 
@@ -19,9 +18,33 @@ onlineSaveRollHook = function(rolls, needed) {
     onlineSendDice('save_result', { rolls, needed });
     document.getElementById('diceOverlay').classList.add('hidden');
     return true;
+};
+
+onlineSync = function() {
+    if (!conn || !conn.open) return;
+    conn.send({
+        type: 'state',
+        aliveUids: state.units.map(u => u.uid),
+        units: state.units.map(u => ({
+            uid: u.uid, x: u.x, y: u.y, targetX: u.targetX, targetY: u.targetY,
+            isMoving: u.isMoving, hp: u.hp, hasActedThisPhase: u.hasActedThisPhase,
+            buffed: u.buffed, m: u.m
+        })),
+        cp: { ...state.cp }, round: state.round, turn: state.turn,
+        currentPhaseIndex: state.currentPhaseIndex, winner: state.winner
+    });
+};
+
+function applySync(data) {
+    state.units = state.units.filter(u => data.aliveUids.includes(u.uid));
+    for (const su of data.units) { const u = state.units.find(u => u.uid === su.uid); if (u) Object.assign(u, su); }
+    state.cp = data.cp; state.round = data.round; state.turn = data.turn;
+    state.currentPhaseIndex = data.currentPhaseIndex; state.winner = data.winner;
+    state.selectedUnit = null; state.currentAction = null;
+    state.selectedUnits = []; state.groupAction = null;
+    updateUI(); updateGroupUI();
 }
 
-// Open dice overlay without triggering another send (avoids loop)
 function applyDiceOpen(title, count, needed, canRoll = false) {
     document.getElementById('diceOverlay').classList.remove('hidden');
     document.getElementById('diceTitle').innerText = title;
@@ -54,67 +77,49 @@ function applyDiceSaveResult(rolls, needed) {
     continueBtn.classList.remove('hidden'); continueBtn.disabled = false; continueBtn.innerText = 'Continue';
 }
 
-onlineSync = function() {
-    if (!conn || !conn.open) return;
-    conn.send({
-        type: 'state',
-        aliveUids: state.units.map(u => u.uid),
-        units: state.units.map(u => ({
-            uid: u.uid, x: u.x, y: u.y, targetX: u.targetX, targetY: u.targetY,
-            isMoving: u.isMoving, hp: u.hp, hasActedThisPhase: u.hasActedThisPhase,
-            buffed: u.buffed, m: u.m
-        })),
-        cp: { ...state.cp },
-        round: state.round, turn: state.turn,
-        currentPhaseIndex: state.currentPhaseIndex, winner: state.winner
-    });
-}
-
-function applySync(data) {
-    state.units = state.units.filter(u => data.aliveUids.includes(u.uid));
-    for (const su of data.units) {
-        const u = state.units.find(u => u.uid === su.uid);
-        if (u) Object.assign(u, su);
-    }
-    state.cp = data.cp; state.round = data.round; state.turn = data.turn;
-    state.currentPhaseIndex = data.currentPhaseIndex; state.winner = data.winner;
-    state.selectedUnit = null; state.currentAction = null;
-    state.selectedUnits = []; state.groupAction = null;
-    updateUI(); updateGroupUI();
-}
-
 function setOnlineStatus(msg, connected) {
+    // In-game widget
     const el = document.getElementById('onlineStatus');
-    el.innerText = msg;
-    el.className = connected ? 'connected' : '';
+    if (el) { el.innerText = msg; el.className = connected ? 'connected' : ''; }
+    const badge = document.getElementById('onlineBadge');
+    if (badge) badge.innerText = connected ? '🟢' : msg;
+    // Main menu status
+    const mel = document.getElementById('menuOnlineStatus');
+    if (mel) { mel.innerText = msg; mel.classList.remove('hidden'); mel.className = connected ? 'menu-status-connected' : 'menu-status-waiting'; }
 }
+
+function startOnlineGame() {
+    document.getElementById('mainMenu').classList.add('hidden');
+    document.getElementById('teamEditor').classList.add('hidden');
+    initGame();
+    if (!gameStarted) { gameStarted = true; draw(); }
+}
+
+let gameStarted = false;
 
 function onData(data) {
-    if (data.type === 'init') {
-        teamData = data.teamData;
-        document.getElementById('mainMenu').classList.add('hidden');
-        document.getElementById('teamEditor').classList.add('hidden');
-        initGame();
-        if (!gameStarted) { gameStarted = true; draw(); }
-        setOnlineStatus('Connected · You are Player 2', true);
-        document.getElementById('onlinePanel').classList.remove('hidden');
-    } else if (data.type === 'roster') {
-        // Host receives guest's team, merges, then starts both sides
+    if (data.type === 'roster') {
+        // Host receives guest team, merges, starts both
         teamData.p2 = data.p2;
         conn.send({ type: 'init', teamData: JSON.parse(JSON.stringify(teamData)) });
         setOnlineStatus('Connected · You are Player 1', true);
-        if (!gameStarted) startGame(); else initGame();
+        startOnlineGame();
+    } else if (data.type === 'init') {
+        // Guest receives merged teamData, starts game
+        teamData = data.teamData;
+        setOnlineStatus('Connected · You are Player 2', true);
+        document.getElementById('onlinePanel').classList.remove('hidden');
+        startOnlineGame();
     } else if (data.type === 'state') {
         applySync(data);
     } else if (data.type === 'dice_open') {
-        applyDiceOpen(data.title, data.count, data.needed, false); // spectator
+        applyDiceOpen(data.title, data.count, data.needed, false);
     } else if (data.type === 'dice_open_defender') {
-        // Attacker watches; defender can roll
         applyDiceOpen(data.title, data.count, data.needed, !isMyTurn());
     } else if (data.type === 'dice_rolled') {
         applyDiceRolled(data.rolls, data.needed);
     } else if (data.type === 'dice_save_result') {
-        applyDiceSaveResult(data.rolls, data.needed); // attacker sees results, clicks Continue
+        applyDiceSaveResult(data.rolls, data.needed);
     } else if (data.type === 'dice_close') {
         document.getElementById('diceOverlay').classList.add('hidden');
     }
@@ -122,34 +127,33 @@ function onData(data) {
 
 function hostGame() {
     myTeam = 1;
-    setOnlineStatus('Creating room...');
+    setOnlineStatus('Creating room…');
     peer = new Peer();
     peer.on('open', id => {
+        document.getElementById('menuRoomCode').innerText = id;
+        document.getElementById('menuRoomRow').classList.remove('hidden');
         document.getElementById('onlineRoomCode').innerText = id;
         document.getElementById('onlineRoomRow').classList.remove('hidden');
-        document.getElementById('onlineSetup').classList.add('hidden');
-        setOnlineStatus('Waiting for opponent...');
+        setOnlineStatus('Waiting for opponent…');
     });
     peer.on('connection', c => {
         conn = c;
-        conn.on('open', () => setOnlineStatus('Opponent connected — waiting for their team…', true));
+        conn.on('open', () => setOnlineStatus('Opponent connected — waiting for team…'));
         conn.on('data', onData);
         conn.on('close', () => setOnlineStatus('Opponent disconnected'));
     });
     peer.on('error', e => setOnlineStatus('Error: ' + e.type));
 }
 
-function joinGame() {
-    const code = document.getElementById('onlineCodeInput').value.trim();
-    if (!code) return;
+function joinGame(code) {
     myTeam = 2;
-    setOnlineStatus('Connecting...');
+    setOnlineStatus('Connecting…');
     peer = new Peer();
     peer.on('open', () => {
         conn = peer.connect(code);
         conn.on('open', () => {
             conn.send({ type: 'roster', p2: JSON.parse(JSON.stringify(teamData.p1)) });
-            setOnlineStatus('Sending team… waiting for host', true);
+            setOnlineStatus('Sending team…');
         });
         conn.on('data', onData);
         conn.on('close', () => setOnlineStatus('Host disconnected'));
@@ -158,19 +162,12 @@ function joinGame() {
     peer.on('error', e => setOnlineStatus('Error: ' + e.type));
 }
 
-// ── UI events ──
+// In-game widget toggle + copy
 document.getElementById('onlineToggle').addEventListener('click', () => {
     document.getElementById('onlinePanel').classList.toggle('hidden');
 });
-document.getElementById('btnHost').addEventListener('click', hostGame);
-document.getElementById('btnJoin').addEventListener('click', () => {
-    document.getElementById('onlineJoinRow').classList.toggle('hidden');
-});
-document.getElementById('btnConnect').addEventListener('click', joinGame);
-document.getElementById('onlineCodeInput').addEventListener('keydown', e => { if (e.key === 'Enter') joinGame(); });
 document.getElementById('btnCopyCode').addEventListener('click', () => {
-    const code = document.getElementById('onlineRoomCode').innerText;
-    navigator.clipboard.writeText(code).then(() => {
+    navigator.clipboard.writeText(document.getElementById('onlineRoomCode').innerText).then(() => {
         document.getElementById('btnCopyCode').innerText = 'Copied!';
         setTimeout(() => { document.getElementById('btnCopyCode').innerText = 'Copy'; }, 1500);
     });

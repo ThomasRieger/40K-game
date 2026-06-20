@@ -20,8 +20,20 @@
             <p id="menuSub">Tabletop Prototype</p>
             <div id="menuFactions"></div>
             <div id="menuButtons">
-                <button id="menuPlayBtn">⚔ Play</button>
-                <button id="menuEditBtn">⚙ Edit Teams</button>
+                <button id="menuEditBtn">⚙ Edit Team</button>
+                <button id="menuHostBtn">⚔ Host Game</button>
+                <button id="menuJoinBtn">🌐 Join Game</button>
+            </div>
+            <div id="menuJoinRow" class="hidden">
+                <input id="menuCodeInput" placeholder="Paste room code">
+                <button id="menuConnectBtn">▶ Connect</button>
+            </div>
+            <div id="menuStatusArea">
+                <div id="menuOnlineStatus" class="hidden"></div>
+                <div id="menuRoomRow" class="hidden">
+                    Room Code: <strong id="menuRoomCode"></strong>
+                    <button id="menuCopyCode">Copy</button>
+                </div>
             </div>
         </div>
     </div>
@@ -30,12 +42,8 @@
     <div id="teamEditor" class="hidden">
         <div id="editorPanel">
             <div id="editorHeader">
-                <span id="editorTitle">Team Builder</span>
+                <span id="editorTitle">My Team</span>
                 <button id="editorClose">✕</button>
-            </div>
-            <div class="ed-tabs">
-                <button class="ed-tab p1 active" id="edTabP1">Player 1</button>
-                <button class="ed-tab p2" id="edTabP2">Player 2</button>
             </div>
             <div id="edFactionRow">
                 <span id="edFactionLabel">Faction</span>
@@ -257,25 +265,17 @@
         </div>
     </div>
 
-    <!-- Online Widget -->
+    <!-- Online Widget (in-game status) -->
     <div id="onlineWidget">
         <div id="onlineTurnBanner">Opponent's Turn</div>
         <div id="onlinePanel" class="hidden">
-            <div id="onlineStatus">Not connected</div>
-            <div id="onlineSetup">
-                <button id="btnHost">Host</button>
-                <button id="btnJoin">Join</button>
-                <div id="onlineJoinRow" class="hidden">
-                    <input id="onlineCodeInput" placeholder="Paste room code">
-                    <button id="btnConnect">▶</button>
-                </div>
-            </div>
+            <div id="onlineStatus">Offline</div>
             <div id="onlineRoomRow" class="hidden">
                 Code: <strong id="onlineRoomCode"></strong>
                 <button id="btnCopyCode">Copy</button>
             </div>
         </div>
-        <button id="onlineToggle">🌐 Online</button>
+        <button id="onlineToggle">🌐 <span id="onlineBadge">Offline</span></button>
     </div>
 
     <script src="js/db.js"></script>
