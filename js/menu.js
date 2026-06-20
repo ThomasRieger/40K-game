@@ -1,10 +1,12 @@
 function showMainMenu() {
     document.getElementById('mainMenu').classList.remove('hidden');
     document.getElementById('teamEditor').classList.add('hidden');
-    document.getElementById('menuFactions').innerHTML =
-        `<div class="menu-faction-group">${UNITS_DB['Space Marines'].units.slice(0,4).map(u=>`<img class="menu-faction-icon" src="${u.icon}" title="${u.name}">`).join('')}</div>` +
-        `<span class="menu-vs">VS</span>` +
-        `<div class="menu-faction-group">${UNITS_DB['Orks'].units.slice(0,4).map(u=>`<img class="menu-faction-icon" src="${u.icon}" title="${u.name}">`).join('')}</div>`;
+    document.getElementById('menuFactions').innerHTML = Object.entries(UNITS_DB).map(([name, fd]) =>
+        `<div class="menu-faction-card" style="border-color:${fd.color}">
+            <div class="menu-faction-name" style="color:${fd.color}">${name}</div>
+            <div class="menu-faction-icons">${fd.units.slice(0,4).map(u=>`<img class="menu-faction-icon" src="${u.icon}" title="${u.name}">`).join('')}</div>
+        </div>`
+    ).join('');
 }
 
 function showTeamEditor() {

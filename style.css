@@ -604,11 +604,12 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 #menuLogo .menu-line:last-child { transform: scaleX(-1); }
 #menuTitle { margin: 0; font-size: 2rem; color: #c8a84b; letter-spacing: 5px; text-transform: uppercase; text-shadow: 0 0 40px rgba(200,168,75,0.3); font-weight: bold; }
 #menuSub { margin: -18px 0 0; font-size: 0.62rem; letter-spacing: 5px; text-transform: uppercase; color: #444; }
-#menuFactions { display: flex; align-items: center; gap: 20px; }
-.menu-faction-group { display: flex; gap: 8px; align-items: center; }
-.menu-faction-icon { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 1px solid #2a2a2a; background: #111; opacity: 0.8; transition: opacity 0.2s; }
+#menuFactions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 10px 0; }
+.menu-faction-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 8px; border: 1px solid #2a2a2a; border-radius: 4px; background: rgba(0,0,0,0.3); }
+.menu-faction-name { font-size: 0.62rem; letter-spacing: 2px; text-transform: uppercase; font-weight: bold; }
+.menu-faction-icons { display: flex; gap: 5px; }
+.menu-faction-icon { width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 1px solid #2a2a2a; background: #111; opacity: 0.8; transition: opacity 0.2s; }
 .menu-faction-icon:hover { opacity: 1; }
-.menu-vs { font-size: 0.75rem; font-weight: bold; color: #555; letter-spacing: 3px; }
 #menuButtons { display: flex; flex-direction: column; align-items: center; gap: 10px; }
 #menuPlayBtn { font-size: 0.88rem; padding: 13px 52px; letter-spacing: 4px; text-transform: uppercase; background: #c8a84b; color: #000; border: none; font-weight: bold; border-radius: 2px; transition: background 0.15s; }
 #menuPlayBtn:hover { background: #dfc060; }
