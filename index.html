@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabletop Prototype</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+</head>
+<body>
+
+    <!-- Main Menu -->
+    <div id="mainMenu">
+        <div id="menuPanel">
+            <div id="menuLogo">
+                <div class="menu-line"></div>
+                <h1 id="menuTitle">Warhammer 40,000</h1>
+                <div class="menu-line"></div>
+            </div>
+            <p id="menuSub">Tabletop Prototype</p>
+            <div id="menuFactions"></div>
+            <div id="menuButtons">
+                <button id="menuPlayBtn">⚔ Play</button>
+                <button id="menuEditBtn">⚙ Edit Teams</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Editor -->
+    <div id="teamEditor" class="hidden">
+        <div id="editorPanel">
+            <div id="editorHeader">
+                <span id="editorTitle">Team Builder</span>
+                <button id="editorClose">✕</button>
+            </div>
+            <div class="ed-tabs">
+                <button class="ed-tab p1 active" id="edTabP1">Player 1</button>
+                <button class="ed-tab p2" id="edTabP2">Player 2</button>
+            </div>
+            <div id="edFactionRow">
+                <span id="edFactionLabel">Faction</span>
+                <select id="edFaction"></select>
+                <div id="edBudgetWrap">
+                    <div id="edBudgetBarOuter"><div id="edBudgetBar"></div></div>
+                    <span id="edBudgetText">0 / 500 pts</span>
+                </div>
+            </div>
+            <div id="edBody">
+                <div id="edShopWrap">
+                    <div class="ed-section-label">Unit Shop</div>
+                    <div id="edShop"></div>
+                </div>
+                <div id="edRosterWrap">
+                    <div class="ed-section-label">Your Roster</div>
+                    <div id="edRoster"></div>
+                    <div id="edRosterTotal"></div>
+                </div>
+            </div>
+            <div id="edFooter">
+                <button id="edResetBtn">Reset Roster</button>
+                <button id="edSaveBtn">Save &amp; Close</button>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+    
+    <!-- UI Overlay -->
+    <div id="uiLayer">
+        <div class="team-stat" id="team1Stats">
+            <div class="team-header">
+                <span class="team-player-label">Player 1</span>
+                <span class="active-indicator hidden" id="p1Active">● Active</span>
+            </div>
+            <div class="team-faction p1-faction">Space Marines</div>
+            <div class="team-body">
+                <div class="team-row">
+                    <span class="team-stat-label">Points</span>
+                    <span class="team-stat-val" id="p1PtsCount">0</span>
+                </div>
+                <div class="team-row">
+                    <span class="team-stat-label">Units</span>
+                    <span class="team-stat-val" id="p1UnitCount">0</span>
+                </div>
+                <div class="team-row">
+                    <span class="team-stat-label">Cmd Pts</span>
+                    <div class="cp-display">
+                        <div class="cp-pips" id="p1CpPips"></div>
+                        <span class="cp-number" id="p1CpCount">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="team-stat" id="team2Stats">
+            <div class="team-header">
+                <span class="team-player-label">Player 2</span>
+                <span class="active-indicator hidden" id="p2Active">● Active</span>
+            </div>
+            <div class="team-faction p2-faction">Orks</div>
+            <div class="team-body">
+                <div class="team-row">
+                    <span class="team-stat-label">Points</span>
+                    <span class="team-stat-val" id="p2PtsCount">0</span>
+                </div>
+                <div class="team-row">
+                    <span class="team-stat-label">Units</span>
+                    <span class="team-stat-val" id="p2UnitCount">0</span>
+                </div>
+                <div class="team-row">
+                    <span class="team-stat-label">Cmd Pts</span>
+                    <div class="cp-display">
+                        <div class="cp-pips" id="p2CpPips"></div>
+                        <span class="cp-number" id="p2CpCount">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="topBar">
+            <div id="roundBlock">
+                <div class="top-sublabel">Round</div>
+                <div id="roundNumber">1</div>
+            </div>
+            <div class="top-sep"></div>
+            <div class="turn-info">
+                <div id="turnIndicator">Player 1's Turn</div>
+                <div id="phaseIndicator">Command Phase</div>
+            </div>
+            <div class="top-sep"></div>
+            <div id="topActions">
+                <button id="toggleLogBtn">≡ Logs</button>
+                <button id="nextPhaseBtn">Next Phase ▶</button>
+            </div>
+            <span id="cpIndicator" style="display:none"></span>
+        </div>
+
+        <div id="globalCombatLog" class="hidden">
+            <div id="logHeader">Combat History</div>
+            <div id="logContent"></div>
+        </div>
+
+        <div id="diceOverlay" class="hidden">
+            <div id="diceModal">
+                <h2 id="diceTitle">Rolling to Hit</h2>
+                <div id="diceContainer"></div>
+                <div id="diceActions">
+                    <button id="rollDiceBtn">ROLL!</button>
+                    <button id="continueCombatBtn" class="hidden">Continue</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="enemyTooltip" class="hidden">
+            <div id="etHeader">
+                <strong id="etName"></strong>
+                <span id="etType"></span>
+            </div>
+            <div class="stats">
+                <div class="stat-row">
+                    <span>M: <span id="etMove"></span>"</span>
+                    <span>T: <span id="etT"></span></span>
+                    <span>Sv: <span id="etSv"></span>+</span>
+                    <span>W: <span id="etW"></span></span>
+                </div>
+                <div class="stat-row">
+                    <span>LD: <span id="etLd"></span>+</span>
+                    <span>OC: <span id="etOc"></span></span>
+                </div>
+            </div>
+            <div id="etWeapons"></div>
+        </div>
+
+        <div id="groupPanel" class="hidden">
+            <div id="groupPanelHeader">
+                <div id="groupPanelTitle">
+                    <span id="groupCount">0</span>
+                    <span class="group-label"> Units Selected</span>
+                </div>
+                <span id="closeGroupBtn">&times;</span>
+            </div>
+            <div class="group-hint">Ctrl+click to add/remove · Ctrl+drag to box-select</div>
+            <div class="actions">
+                <div class="action-grid">
+                    <button id="grpMove" disabled>Move</button>
+                    <button id="grpShoot" disabled>Shoot</button>
+                    <button id="grpCharge" disabled>Charge</button>
+                    <button id="grpMelee" disabled>Fight</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="characterSheet" class="hidden">
+            <div id="sheetHeader">
+                <div id="sheetTitleBlock">
+                    <h3 id="unitName">Unit Name</h3>
+                    <span id="unitType">Type</span>
+                </div>
+                <div id="sheetControls">
+                    <button id="legendToggleBtn" title="Stats guide">?</button>
+                    <span id="closeSheetBtn">&times;</span>
+                </div>
+            </div>
+            <div id="statsLegend" class="hidden">
+                <div class="legend-section">
+                    <div class="legend-title">Datacard Stats</div>
+                    <div class="legend-grid">
+                        <span class="legend-key">M</span><span class="legend-val">Move — inches per turn</span>
+                        <span class="legend-key">T</span><span class="legend-val">Toughness — harder to wound</span>
+                        <span class="legend-key">SV</span><span class="legend-val">Save — roll this or higher</span>
+                        <span class="legend-key">W</span><span class="legend-val">Wounds — total hit points</span>
+                        <span class="legend-key">LD</span><span class="legend-val">Leadership — ability checks</span>
+                        <span class="legend-key">OC</span><span class="legend-val">Obj. Control — holds objectives</span>
+                    </div>
+                </div>
+                <div class="legend-section">
+                    <div class="legend-title">Weapon Stats</div>
+                    <div class="legend-grid">
+                        <span class="legend-key">WS</span><span class="legend-val">Weapon Skill — melee hit roll</span>
+                        <span class="legend-key">BS</span><span class="legend-val">Ballistic Skill — ranged hit roll</span>
+                        <span class="legend-key">S</span><span class="legend-val">Strength — vs Toughness to wound</span>
+                        <span class="legend-key">AP</span><span class="legend-val">Armour Pen. — lowers enemy save</span>
+                        <span class="legend-key">D</span><span class="legend-val">Damage — wounds per hit through</span>
+                        <span class="legend-key">A</span><span class="legend-val">Attacks — dice rolled to hit</span>
+                        <span class="legend-key">Rng</span><span class="legend-val">Range — max shooting distance</span>
+                    </div>
+                </div>
+            </div>
+            <div id="statBlock">
+                <div class="stat-cell"><div class="stat-label">M</div><div class="stat-value"><span id="statMove"></span>"</div></div>
+                <div class="stat-cell"><div class="stat-label">T</div><div class="stat-value"><span id="statToughness"></span></div></div>
+                <div class="stat-cell"><div class="stat-label">SV</div><div class="stat-value"><span id="statSave"></span>+</div></div>
+                <div class="stat-cell"><div class="stat-label">W</div><div class="stat-value"><span id="statWounds"></span></div></div>
+                <div class="stat-cell"><div class="stat-label">LD</div><div class="stat-value"><span id="statLd"></span>+</div></div>
+                <div class="stat-cell"><div class="stat-label">OC</div><div class="stat-value"><span id="statOc"></span></div></div>
+            </div>
+            <div id="woundsTrack"></div>
+            <div id="weaponsBlock">
+                <div class="weapon-section-label">Melee Weapon</div>
+                <div id="meleeWeaponInfo" class="weapon-row"></div>
+                <div class="weapon-section-label">Ranged Weapon</div>
+                <div id="rangedWeaponInfo" class="weapon-row"></div>
+            </div>
+            <div class="actions">
+                <div class="action-grid">
+                    <button id="btnMove" disabled>Move</button>
+                    <button id="btnShoot" disabled>Shoot</button>
+                    <button id="btnCharge" disabled>Charge</button>
+                    <button id="btnMelee" disabled>Fight</button>
+                </div>
+                <button id="btnAbility" disabled>Ability (1 CP)</button>
+                <div id="abilityPopup" class="hidden">
+                    <button id="btnHeal">Heal (+2 HP)</button>
+                    <button id="btnDash">Dash (+2.5")</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Online Widget -->
+    <div id="onlineWidget">
+        <div id="onlineTurnBanner">Opponent's Turn</div>
+        <div id="onlinePanel" class="hidden">
+            <div id="onlineStatus">Not connected</div>
+            <div id="onlineSetup">
+                <button id="btnHost">Host</button>
+                <button id="btnJoin">Join</button>
+                <div id="onlineJoinRow" class="hidden">
+                    <input id="onlineCodeInput" placeholder="Paste room code">
+                    <button id="btnConnect">▶</button>
+                </div>
+            </div>
+            <div id="onlineRoomRow" class="hidden">
+                Code: <strong id="onlineRoomCode"></strong>
+                <button id="btnCopyCode">Copy</button>
+            </div>
+        </div>
+        <button id="onlineToggle">🌐 Online</button>
+    </div>
+
+    <script src="js/db.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/team.js"></script>
+    <script src="js/unit.js"></script>
+    <script src="js/game.js"></script>
+    <script src="js/combat.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/menu.js"></script>
+    <script src="js/online.js"></script>
+</body>
+</html>
